@@ -1,23 +1,69 @@
-import logo from './logo.svg';
-import './App.css';
+import { Container } from "react-bootstrap";
+import React, { useEffect, useState } from "react";
+import NavBar from "./components/NavBar";
+import MoviesList from "./components/MoviesList";
+import MoviesDetails from "./components/MoviesDetails";
+import axios from "axios";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 function App() {
+  const [movies, setMovies] = useState([]);
+  const [pageCount, setpageCount] = useState(0);
+  //get all movies by axios
+  const getAllMovies = async () => {
+    const res = await axios.get(
+      "https://api.themoviedb.org/3/movie/popular?api_key=d8402b4180d53e51daf17fb75d7b5f4b&language=ar"
+    );
+    setMovies(res.data.results);
+    setpageCount(res.data.total_pages);
+  };
+
+  //get current page
+  const getPage = async (page) => {
+    const res = await axios.get(
+      `https://api.themoviedb.org/3/movie/popular?api_key=d8402b4180d53e51daf17fb75d7b5f4b&language=ar&page=${page}`
+    );
+    setMovies(res.data.results);
+    setpageCount(res.data.total_pages);
+  };
+
+  useEffect(() => {
+    getAllMovies();
+  }, []);
+
+  //to search in api
+  const search = async (word) => {
+    if (word === "") {
+      getAllMovies();
+    } else {
+      const res = await axios.get(
+        `https://api.themoviedb.org/3/search/movie?api_key=d8402b4180d53e51daf17fb75d7b5f4b&query=${word}&language=ar`
+      );
+      setMovies(res.data.results);
+      setpageCount(res.data.total_pages);
+    }
+  };
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div className="font color-body ">
+      <NavBar search={search} />
+      <Container>
+        <BrowserRouter>
+          <Routes>
+            <Route
+              path="/"
+              element={
+                <MoviesList
+                  movies={movies}
+                  getPage={getPage}
+                  pageCount={pageCount}
+                />
+              }
+            />
+
+            <Route path="/movie/:id" element={<MoviesDetails />} />
+          </Routes>
+        </BrowserRouter>
+      </Container>
     </div>
   );
 }
